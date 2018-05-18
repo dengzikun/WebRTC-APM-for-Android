@@ -1,4 +1,6 @@
-package com.sinowave.ddp;
+package com.sinowave.ddp.audio.aec;
+
+import java.nio.ByteBuffer;
 
 /**
  * Created by sino on 2016-03-14.
@@ -83,7 +85,7 @@ public class Apm {
 
 
     public Apm(boolean aecExtendFilter, boolean speechIntelligibilityEnhance, boolean delayAgnostic, boolean beamforming, boolean nextGenerationAec, boolean experimentalNs, boolean experimentalAgc) throws Exception{
-        if(!nativeCreateApmInstance(aecExtendFilter, speechIntelligibilityEnhance, delayAgnostic, beamforming, nextGenerationAec, experimentalNs, experimentalAgc)){
+        if(!Create(aecExtendFilter, speechIntelligibilityEnhance, delayAgnostic, beamforming, nextGenerationAec, experimentalNs, experimentalAgc)){
             throw new Exception("create apm failed!");
         }
         _init = true;
@@ -92,7 +94,7 @@ public class Apm {
 
     public void close() {
         if(_init){
-            nativeFreeApmInstance();
+            Destroy();
             _init = false;
         }
     }
@@ -169,14 +171,27 @@ public class Apm {
     public int SetStreamDelay(int delay_ms){ return set_stream_delay_ms(delay_ms);  }
 
 
+    /////////////////////////////////////////////////////////////////////////////////////
+    public int CaptureStreamCacheDirectBufferAddress(ByteBuffer byteBuffer){ return nativeCaptureStreamCacheDirectBufferAddress(byteBuffer); }
+    public int RenderStreamCacheDirectBufferAddress(ByteBuffer byteBuffer){ return nativeRenderStreamCacheDirectBufferAddress(byteBuffer); }
+
+    public int ProcessCaptureStream() { // 16K, 16bits, mono， 10ms
+        return ProcessStreamEx();
+    }
+    public int ProcessRenderStream() { // 16K, 16bits, mono， 10ms
+        return ProcessReverseStreamEx();
+    }
+    /////////////////////////////////////////////////////////////////////////////////////
+
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
         close();
     }
 
-    private native boolean nativeCreateApmInstance(boolean aecExtendFilter, boolean speechIntelligibilityEnhance, boolean delayAgnostic, boolean beamforming, boolean nextGenerationAec, boolean experimentalNs, boolean experimentalAgc);
-    private native void nativeFreeApmInstance();
+    private native boolean Create(boolean aecExtendFilter, boolean speechIntelligibilityEnhance, boolean delayAgnostic, boolean beamforming, boolean nextGenerationAec, boolean experimentalNs, boolean experimentalAgc);
+    private native void Destroy();
 
     private native int high_pass_filter_enable(boolean enable);
 
@@ -234,6 +249,14 @@ public class Apm {
     private native int ProcessStream(short[] nearEnd, int offset); //本地数据 // 16K, 16Bits, 单声道， 10ms
     private native int ProcessReverseStream(short[] farEnd, int offset); // 远端数据 // 16K, 16Bits, 单声道， 10ms
     private native int set_stream_delay_ms(int delay);
+
+    ///////////////////////////////////////////////////////////////////
+    private native int nativeCaptureStreamCacheDirectBufferAddress(ByteBuffer byteBuffer);
+    private native int nativeRenderStreamCacheDirectBufferAddress(ByteBuffer byteBuffer);
+
+    private native int ProcessStreamEx(); //本地数据 // 16K, 16Bits, 单声道， 10ms
+    private native int ProcessReverseStreamEx(); // 远端数据 // 16K, 16Bits, 单声道， 10ms
+    //////////////////////////////////////////////////////////////////
 
     private boolean _init = false;
 

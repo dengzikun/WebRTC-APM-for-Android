@@ -36,6 +36,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_LDLIBS += -llog
 LOCAL_LDLIBS += -landroid
+LOCAL_LDLIBS += -latomic
 
 LOCAL_CPPFLAGS += -std=c++11
 LOCAL_CFLAGS += -DWEBRTC_ANDROID
